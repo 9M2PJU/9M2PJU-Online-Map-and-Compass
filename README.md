@@ -2,8 +2,6 @@
 
 A premium, interactive web application that simulates a real Silva-style orienteering compass overlaid on dynamic maps.
 
-🌐 **Live Demo:** [Deploy to GitHub Pages](https://9m2pju.github.io/9M2PJU-Online-Map-and-Compass/)
-
 ## Features
 - **Silva Compass Dial**: Draggable baseplate and rotatable bezel to measure bearings. The needle points to North, and the dial rotates relative to the baseplate.
 - **Dynamic Scale Rulers**: Left, right, and top rulers automatically scale as you zoom or pan, adjusting accurately to local Web Mercator latitude scale.
