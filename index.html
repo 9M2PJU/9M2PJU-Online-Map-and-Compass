@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
-    <title>9M2PJU Map & Compass</title>
+    <title>Sleek Compass & Map Protractor</title>
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -29,10 +29,7 @@
             <div class="sidebar-header">
                 <div class="logo-section">
                     <i data-lucide="compass" class="logo-icon"></i>
-                    <h1 style="display:flex; flex-direction:column; gap:0; line-height:1.15;">
-                        <span style="font-size:14px; letter-spacing:2px; opacity:0.7; font-weight:600;">9M2PJU</span>
-                        <span>9M2PJU Map & Compass</span>
-                    </h1>
+                    <h1>9M2PJU Map & Compass</h1>
                 </div>
                 <button class="toggle-sidebar-btn" id="close-sidebar-btn" title="Collapse Sidebar">
                     <i data-lucide="chevron-left"></i>
@@ -74,8 +71,16 @@
                             <span class="info-value" id="dash-lat">0.00000°</span>
                         </div>
                         <div class="info-row">
+                            <span class="info-label">Lat (DMS)</span>
+                            <span class="info-value" id="dash-lat-dms">0° 0' 0" N</span>
+                        </div>
+                        <div class="info-row">
                             <span class="info-label">Longitude</span>
                             <span class="info-value" id="dash-lng">0.00000°</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Lng (DMS)</span>
+                            <span class="info-value" id="dash-lng-dms">0° 0' 0" E</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Current Zoom</span>
@@ -204,6 +209,9 @@
                 <path d="M6,6 H254 V360 Q254,420 130,420 Q6,420 6,360 Z"
                       id="compass-baseplate"
                       fill="rgba(180,220,255,0.15)" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+                
+                <!-- Baseplate Engraved Brand -->
+                <text x="130" y="415" text-anchor="middle" fill="#1a365d" font-size="13" font-weight="900" font-family="Outfit, Arial, sans-serif" letter-spacing="4">9M2PJU</text>
 
                 <!-- Direction-of-travel arrow -->
                 <line x1="130" y1="26" x2="130" y2="310"
@@ -248,6 +256,9 @@
                     <line x1="150" y1="226" x2="150" y2="394" stroke="#ef4444" stroke-width="0.8" opacity="0.25"/>
                     
                     <polygon points="130,225 124,240 136,240" fill="#ef4444" opacity="0.9"/>
+                    
+                    <!-- Watermark Brand Text ON DIAL BACKGROUND -->
+                    <text x="130" y="280" text-anchor="middle" fill="#1a365d" font-size="22" font-weight="900" font-family="Outfit, Arial, sans-serif" letter-spacing="2">9M2PJU</text>
 
                     <!-- Beautiful 3D Shaded Needle -->
                     <!-- North Side (Shaded Red/Coral) -->
