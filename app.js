@@ -30,13 +30,17 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     });
 
-    // Start with voyager by default, centered at a spectacular hiking spot: Yosemite Valley
+    // Start with Standard (OSM) by default
+    // This serves as a fallback if the user denies location access.
     const defaultCenter = [37.7456, -119.5332]; 
     const map = L.map('map', { 
         tap: false, 
         zoomControl: false, // We'll add custom positioned zoom control
-        layers: [voyager] 
+        layers: [osm] 
     }).setView(defaultCenter, 13);
+
+    // Attempt to locate the user on startup
+    map.locate({ setView: true, maxZoom: 13 });
 
     // Add scale and custom layer control
     L.control.layers({ 
@@ -132,7 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         capsuleCounter.setAttribute('transform', `rotate(${-toolRot} ${CX} ${CY})`);
 
         const bearing = ((toolRot % 360) + 360) % 360;
-        bearingDisp.textContent = bearing.toFixed(1) + '°';
+        const mils = Math.round(bearing * (6400 / 360));
+        bearingDisp.textContent = `${bearing.toFixed(1)}° / ${mils} mil`;
 
         // Update anchor coordinate to follow compass pivot point
         const latlng = map.containerPointToLatLng([posX, posY]);
@@ -147,22 +152,21 @@ document.addEventListener('DOMContentLoaded', () => {
         capsuleCounter.setAttribute('transform', `rotate(${-toolRot} ${CX} ${CY})`);
         
         const bearing = ((toolRot % 360) + 360) % 360;
-        bearingDisp.textContent = bearing.toFixed(1) + '°';
+        const mils = Math.round(bearing * (6400 / 360));
+        bearingDisp.textContent = `${bearing.toFixed(1)}° / ${mils} mil`;
         
         // Re-read geographic position underneath compass
         const latlng = map.containerPointToLatLng([posX, posY]);
         updateCoordinateDisplays(latlng);
     }
 
-    // Convert decimal degrees → D° M' S" {N|S|E|W}
-    function toDMS(decimal, isLat) {
-        const abs = Math.abs(decimal);
-        const deg = Math.floor(abs);
-        const minFull = (abs - deg) * 60;
-        const min = Math.floor(minFull);
-        const sec = ((minFull - min) * 60).toFixed(2);
-        const dir = isLat ? (decimal >= 0 ? 'N' : 'S') : (decimal >= 0 ? 'E' : 'W');
-        return `${deg}° ${String(min).padStart(2,'0')}' ${String(sec).padStart(5,'0')}" ${dir}`;
+    function toDMS(deg, isLat) {
+        const dir = deg < 0 ? (isLat ? 'S' : 'W') : (isLat ? 'N' : 'E');
+        const absDeg = Math.abs(deg);
+        const d = Math.floor(absDeg);
+        const m = Math.floor((absDeg - d) * 60);
+        const s = ((absDeg - d - m / 60) * 3600).toFixed(1);
+        return `${d}° ${m}' ${s}" ${dir}`;
     }
 
     function updateCoordinateDisplays(latlng) {
@@ -174,14 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Sidebar Dashboard Panel
         document.getElementById('dash-lat').textContent = `${latStr}°`;
+        document.getElementById('dash-lat-dms').textContent = toDMS(latlng.lat, true);
         document.getElementById('dash-lng').textContent = `${lngStr}°`;
+        document.getElementById('dash-lng-dms').textContent = toDMS(latlng.lng, false);
         document.getElementById('dash-zoom').textContent = map.getZoom();
-
-        // DMS fields
-        const latDMSel = document.getElementById('dash-lat-dms');
-        const lngDMSel = document.getElementById('dash-lng-dms');
-        if (latDMSel) latDMSel.textContent = toDMS(latlng.lat, true);
-        if (lngDMSel) lngDMSel.textContent = toDMS(latlng.lng, false);
 
         // Calculate Sun Position using SunCalc
         try {
@@ -477,9 +477,15 @@ document.addEventListener('DOMContentLoaded', () => {
         lastTap = now;
     });
 
+    let isFollowingCamera = false;
+
     // Keep compass anchored to map on drag/zoom
     map.on('move', () => {
         if (dragActive) return; // Prevent conflicts if user is actively dragging it
+        
+        if (isFollowingCamera) {
+            anchorLatLng = map.getCenter();
+        }
         
         const point = map.latLngToContainerPoint(anchorLatLng);
         posX = point.x;
@@ -504,61 +510,52 @@ document.addEventListener('DOMContentLoaded', () => {
         drawRulers();
     });
 
-    // ── Pinch-to-Resize Compass ───────────────────────────────────────────────
-    // Read initial scale from CSS (mobile sets 0.65, desktop 1.0)
-    let compassScale = parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue('--compass-scale').trim() || '1'
-    ) || 1;
+    // ── Compass Scaling (Scroll / Pinch) ──────────────────────────────────────
+    let currentScale = window.innerWidth <= 768 ? 0.65 : 1;
+    document.documentElement.style.setProperty('--compass-scale', currentScale);
 
-    // Apply scale: updates CSS var + transform-origin so pivot stays correct
-    function applyCompassScale(scale) {
-        compassScale = Math.min(Math.max(scale, 0.35), 1.6); // Clamp between 35% and 160%
-        document.documentElement.style.setProperty('--compass-scale', compassScale);
-        // Update transform-origin to match new size
-        toolBox.style.transformOrigin = `${130 * compassScale}px ${310 * compassScale}px`;
-        applyTransformOnly();
-    }
+    // Zoom scale with mouse wheel over the compass
+    toolBox.addEventListener('wheel', e => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        currentScale = Math.max(0.4, Math.min(currentScale + delta, 2.0));
+        document.documentElement.style.setProperty('--compass-scale', currentScale);
+    });
 
-    // Track active pointers on compass for pinch gesture
-    const activePointers = new Map();
-    let pinchStartDist = null;
-    let pinchStartScale = compassScale;
+    // Pinch to zoom on touch devices
+    let initialPinchDist = null;
+    let initialScale = 1;
 
-    function getPinchDist() {
-        const pts = [...activePointers.values()];
-        const dx = pts[0].x - pts[1].x;
-        const dy = pts[0].y - pts[1].y;
-        return Math.hypot(dx, dy);
-    }
-
-    svgEl.addEventListener('pointerdown', e => {
-        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    }, { capture: true, passive: true });
-
-    svgEl.addEventListener('pointermove', e => {
-        if (!activePointers.has(e.pointerId)) return;
-        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-        // Only handle pinch when 2 fingers are on the compass
-        if (activePointers.size === 2) {
-            const dist = getPinchDist();
-            if (pinchStartDist === null) {
-                pinchStartDist = dist;
-                pinchStartScale = compassScale;
-            } else {
-                applyCompassScale(pinchStartScale * (dist / pinchStartDist));
-            }
+    toolBox.addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
+            dragActive = false; // Disable dragging when pinching
+            e.preventDefault();
+            initialPinchDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            initialScale = currentScale;
         }
-    }, { capture: true, passive: true });
+    });
 
-    const clearPinch = e => {
-        activePointers.delete(e.pointerId);
-        if (activePointers.size < 2) {
-            pinchStartDist = null;
+    toolBox.addEventListener('touchmove', e => {
+        if (e.touches.length === 2 && initialPinchDist) {
+            e.preventDefault();
+            const currentDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const scaleFactor = currentDist / initialPinchDist;
+            currentScale = Math.max(0.4, Math.min(initialScale * scaleFactor, 2.0));
+            document.documentElement.style.setProperty('--compass-scale', currentScale);
         }
-    };
-    svgEl.addEventListener('pointerup', clearPinch, { capture: true, passive: true });
-    svgEl.addEventListener('pointercancel', clearPinch, { capture: true, passive: true });
+    });
+
+    toolBox.addEventListener('touchend', e => {
+        if (e.touches.length < 2) {
+            initialPinchDist = null;
+        }
+    });
 
     // Delay initial movement so user notices the gorgeous animation
     setTimeout(() => {
@@ -575,11 +572,13 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebarBtn.addEventListener('click', () => {
         sidebar.classList.add('collapsed');
         sidebarTrigger.classList.remove('hidden');
+        document.body.classList.add('sidebar-collapsed');
     });
 
     sidebarTrigger.addEventListener('click', () => {
         sidebar.classList.remove('collapsed');
         sidebarTrigger.classList.add('hidden');
+        document.body.classList.remove('sidebar-collapsed');
     });
 
     // Tab switcher
@@ -626,17 +625,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const lon = parseFloat(item.lon);
                         
                         // Fly to search point
+                        isFollowingCamera = true;
                         map.flyTo([lat, lon], 14);
                         
-                        // Anchor compass at this new point
-                        anchorLatLng = L.latLng(lat, lon);
-                        
-                        // Recenter compass to center of viewport
-                        posX = window.innerWidth / 2;
-                        posY = window.innerHeight / 2;
-                        
-                        applyTransform();
-                        drawRulers();
+                        map.once('moveend', () => {
+                            isFollowingCamera = false;
+                            anchorLatLng = L.latLng(lat, lon);
+                            drawRulers();
+                        });
                         
                         searchResults.style.display = 'none';
                         searchInput.value = '';
@@ -692,10 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.removeLayer(topo);
                 }
             } else {
-                if (!map.hasLayer(voyager)) {
-                    map.addLayer(voyager);
+                if (!map.hasLayer(osm)) {
+                    map.addLayer(osm);
                     map.removeLayer(darkMatter);
-                    map.removeLayer(osm);
+                    map.removeLayer(voyager);
                     map.removeLayer(topo);
                     map.removeLayer(satellite);
                 }
@@ -752,15 +748,14 @@ document.addEventListener('DOMContentLoaded', () => {
             div.addEventListener('click', e => {
                 if (e.target.closest('.delete-waypoint-btn')) return;
                 
+                isFollowingCamera = true;
                 map.flyTo([wp.lat, wp.lng], 14);
-                anchorLatLng = L.latLng(wp.lat, wp.lng);
                 
-                // Recenter compass
-                posX = window.innerWidth / 2;
-                posY = window.innerHeight / 2;
-                
-                applyTransform();
-                drawRulers();
+                map.once('moveend', () => {
+                    isFollowingCamera = false;
+                    anchorLatLng = L.latLng(wp.lat, wp.lng);
+                    drawRulers();
+                });
             });
 
             // Delete action
