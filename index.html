@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
+    <title>Sleek Compass & Map Protractor</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Map Container -->
+    <div id="map"></div>
+
+    <!-- App Overlay Container -->
+    <div class="app-container">
+        
+        <!-- Sidebar Toggle Trigger (Visible when collapsed) -->
+        <button class="sidebar-trigger glass-panel hidden" id="sidebar-trigger" title="Open Sidebar">
+            <i data-lucide="menu"></i>
+        </button>
+
+        <!-- Sidebar Dashboard -->
+        <div class="sidebar glass-panel" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-section">
+                    <i data-lucide="compass" class="logo-icon"></i>
+                    <h1>Map & Compass</h1>
+                </div>
+                <button class="toggle-sidebar-btn" id="close-sidebar-btn" title="Collapse Sidebar">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="dashboard">
+                    <i data-lucide="layout-dashboard" size="18"></i>
+                    Dashboard
+                </button>
+                <button class="tab-btn" data-tab="waypoints">
+                    <i data-lucide="map-pin" size="18"></i>
+                    Waypoints
+                </button>
+                <button class="tab-btn" data-tab="themes">
+                    <i data-lucide="palette" size="18"></i>
+                    Themes
+                </button>
+                <button class="tab-btn" data-tab="info">
+                    <i data-lucide="info" size="18"></i>
+                    Guide
+                </button>
+            </div>
+
+            <!-- Sidebar Tab Content -->
+            <div class="sidebar-content">
+                
+                <!-- Dashboard Tab -->
+                <div class="tab-pane" id="tab-dashboard">
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="navigation" size="12"></i>
+                            Position Details
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Latitude</span>
+                            <span class="info-value" id="dash-lat">0.00000°</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Longitude</span>
+                            <span class="info-value" id="dash-lng">0.00000°</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Current Zoom</span>
+                            <span class="info-value" id="dash-zoom">13</span>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="sun" size="12"></i>
+                            Sun & Solar Position
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Solar Azimuth</span>
+                            <span class="info-value" id="dash-sun-az">--°</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Solar Altitude</span>
+                            <span class="info-value" id="dash-sun-alt">--°</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Sunrise Time</span>
+                            <span class="info-value" id="dash-sunrise">--:--</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Sunset Time</span>
+                            <span class="info-value" id="dash-sunset">--:--</span>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="search" size="12"></i>
+                            Location Finder
+                        </div>
+                        <div class="search-wrapper">
+                            <i data-lucide="search" class="search-icon-inline" size="16"></i>
+                            <input type="text" class="search-input" id="search-input" placeholder="Search city, address..." />
+                            <button class="search-btn" id="search-btn">Go</button>
+                        </div>
+                        <div class="search-results-list" id="search-results"></div>
+                    </div>
+                </div>
+
+                <!-- Waypoints Tab -->
+                <div class="tab-pane" id="tab-waypoints" style="display: none;">
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="plus-circle" size="12"></i>
+                            Add Current Position
+                        </div>
+                        <div class="add-waypoint-wrapper">
+                            <input type="text" class="waypoint-input" id="waypoint-name-input" placeholder="e.g., Summit Base" />
+                            <button class="search-btn" id="add-waypoint-btn">Save</button>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="list" size="12"></i>
+                            Saved Waypoints
+                        </div>
+                        <div class="waypoint-list" id="waypoint-list-container">
+                            <!-- Populated dynamically -->
+                            <div class="info-row" style="justify-content: center; padding: 10px 0; color: var(--text-muted);">
+                                <span>No saved waypoints yet.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Themes Tab -->
+                <div class="tab-pane" id="tab-themes" style="display: none;">
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="paint-bucket" size="12"></i>
+                            UI & Compass Theme
+                        </div>
+                        <div class="theme-selector">
+                            <div class="theme-opt active" data-theme-val="dark">Obsidian</div>
+                            <div class="theme-opt" data-theme-val="cyberpunk">Cyberpunk</div>
+                            <div class="theme-opt" data-theme-val="acrylic">Light</div>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-title">
+                            <i data-lucide="sliders" size="12"></i>
+                            Baseplate Opacity
+                        </div>
+                        <div class="info-row" style="gap: 12px; align-items: center;">
+                            <input type="range" id="opacity-slider" min="5" max="95" value="15" style="flex: 1; cursor: pointer; accent-color: var(--accent);" />
+                            <span class="info-value" id="opacity-val" style="min-width: 32px; text-align: right;">15%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guide Tab -->
+                <div class="tab-pane" id="tab-info" style="display: none;">
+                    <div class="module-card" style="font-size: 13.5px; line-height: 1.6; gap: 8px;">
+                        <h3 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Silva Navigation Quickstart</h3>
+                        <p>1. <strong>Drag</strong> the compass baseplate to position the pivot over your starting point.</p>
+                        <p>2. <strong>Rotate</strong> the red Dial bezel (using the bottom-right wheel) to align the baseplate orientation with your target line of travel.</p>
+                        <p>3. Look at the top center of the compass dial to read your <strong>bearing</strong>.</p>
+                        <p>4. Dynamic <strong>rulers</strong> match the map scale automatically when zooming, allowing easy grid-coordinate distance tracking.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Floating HUD at Top Center -->
+        <div class="floating-overlay-panel coords-hud glass-panel" id="coords-display">
+            <div class="coords-hud-latlng" id="latlng-text">0.00000, 0.00000</div>
+            <div class="coords-hud-sun" id="sun-text">Sun Position: Azimuth --° | Altitude --°</div>
+        </div>
+
+        <!-- Draggable & Rotatable Compass Tool -->
+        <div id="tool-box">
+            <!-- Bearing Badge floating attached above Compass -->
+            <div class="bearing-badge" id="bearing-display">0.0°</div>
+            
+            <svg id="compass-svg" viewBox="0 0 260 500" xmlns="http://www.w3.org/2000/svg">
+                <!-- BASEPLATE -->
+                <!-- Transparent acrylic backplate with smooth curved tail -->
+                <path d="M6,6 H254 V360 Q254,420 130,420 Q6,420 6,360 Z"
+                      id="compass-baseplate"
+                      fill="rgba(180,220,255,0.15)" stroke="#111" stroke-width="2.5" stroke-linejoin="round"/>
+
+                <!-- Direction-of-travel arrow -->
+                <line x1="130" y1="26" x2="130" y2="310"
+                      stroke="#ef4444" stroke-width="2.5" stroke-dasharray="8,5"/>
+                <polygon points="130,6 122,24 138,24" fill="#ef4444"/>
+
+                <!-- Left, Right, Top Ruler Ticks & Labels -->
+                <g id="ruler-left"   stroke="rgba(0,0,0,0.85)" stroke-width="1"   fill="none"></g>
+                <g id="ruler-right"  stroke="rgba(0,0,0,0.85)" stroke-width="1"   fill="none"></g>
+                <g id="ruler-top"    stroke="rgba(0,0,0,0.85)" stroke-width="0.9" fill="none"></g>
+                <g id="ruler-labels" fill="rgba(0,0,0,0.85)" font-family="JetBrains Mono, Arial, sans-serif" font-size="7.5"></g>
+
+                <!-- COMPASS DIAL RING (Fixed Base Ring) -->
+                <circle cx="130" cy="310" r="90" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="20"/>
+                <circle cx="130" cy="310" r="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.7"/>
+                <circle cx="130" cy="310" r="90" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.7"/>
+
+                <!-- ROTATABLE DIAL CONTAINER (Counter-rotated relative to baseplate) -->
+                <g id="capsule-counter">
+                    <g id="bezel-ticks" stroke="white" stroke-width="1"></g>
+                    <g id="bezel-labels" fill="white" font-family="JetBrains Mono, Arial, sans-serif"></g>
+
+                    <!-- Cardinals -->
+                    <text x="130" y="228" text-anchor="middle" dominant-baseline="central"
+                          stroke="#000" stroke-width="3.5" paint-order="stroke"
+                          fill="#ef4444" font-size="16" font-weight="900" font-family="Outfit, Arial, sans-serif">N</text>
+                    <text x="130" y="392" text-anchor="middle" dominant-baseline="central"
+                          stroke="#000" stroke-width="3" paint-order="stroke"
+                          fill="white" font-size="15" font-weight="700" font-family="Outfit, Arial, sans-serif">S</text>
+                    <text x="212" y="310" text-anchor="middle" dominant-baseline="central"
+                          stroke="#000" stroke-width="3" paint-order="stroke"
+                          fill="white" font-size="14" font-weight="700" font-family="Outfit, Arial, sans-serif">E</text>
+                    <text x="48"  y="310" text-anchor="middle" dominant-baseline="central"
+                          stroke="#000" stroke-width="3" paint-order="stroke"
+                          fill="white" font-size="14" font-weight="700" font-family="Outfit, Arial, sans-serif">W</text>
+
+                    <!-- Orienting Red gridlines inside capsule -->
+                    <line x1="130" y1="226" x2="130" y2="394" stroke="#ef4444" stroke-width="1.5" opacity="0.65"/>
+                    <line x1="120" y1="226" x2="120" y2="394" stroke="#ef4444" stroke-width="0.8" opacity="0.45"/>
+                    <line x1="140" y1="226" x2="140" y2="394" stroke="#ef4444" stroke-width="0.8" opacity="0.45"/>
+                    <line x1="110" y1="226" x2="110" y2="394" stroke="#ef4444" stroke-width="0.8" opacity="0.25"/>
+                    <line x1="150" y1="226" x2="150" y2="394" stroke="#ef4444" stroke-width="0.8" opacity="0.25"/>
+                    
+                    <polygon points="130,225 124,240 136,240" fill="#ef4444" opacity="0.9"/>
+
+                    <!-- Beautiful 3D Shaded Needle -->
+                    <!-- North Side (Shaded Red/Coral) -->
+                    <polygon points="130,233 125,310 130,310" fill="#dc2626" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+                    <polygon points="130,233 135,310 130,310" fill="#ef4444" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+                    
+                    <!-- South Side (Shaded Silver/Gray) -->
+                    <polygon points="130,387 125,310 130,310" fill="#cbd5e1" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+                    <polygon points="130,387 135,310 130,310" fill="#94a3b8" stroke="#fff" stroke-width="0.5" stroke-linejoin="round"/>
+
+                    <!-- Pivot Pin -->
+                    <circle cx="130" cy="310" r="8" fill="#1e293b" stroke="#f1f5f9" stroke-width="1.5"/>
+                    <circle cx="130" cy="310" r="3" fill="#64748b"/>
+                </g>
+            </svg>
+
+            <!-- Rotary Bezel Control Handle -->
+            <div id="rotate-handle" title="Drag to rotate Compass dial | Double tap to reset position">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <polyline points="3 3 3 8 8 8"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Floating Bottom Action Bar for Map & Measure Tools -->
+        <div class="action-bar-container">
+            <!-- Measurement Info Bar -->
+            <div class="measure-info glass-panel" id="measure-result"></div>
+            
+            <div class="action-bar glass-panel">
+                <button class="action-btn" id="btn-distance" title="Draw line path to calculate distance">
+                    <i data-lucide="ruler"></i>
+                    <span>Distance</span>
+                </button>
+                <button class="action-btn" id="btn-area" title="Draw polygon to calculate perimeter and area">
+                    <i data-lucide="hexagon"></i>
+                    <span>Area</span>
+                </button>
+                <button class="action-btn" id="btn-undo" title="Remove last point">
+                    <i data-lucide="undo-2"></i>
+                    <span>Undo</span>
+                </button>
+                <button class="action-btn action-btn-danger" id="btn-clear" title="Clear measurements">
+                    <i data-lucide="trash-2"></i>
+                    <span>Clear</span>
+                </button>
+                <button class="action-btn action-btn-warning" id="btn-north" title="Align Compass North">
+                    <i data-lucide="compass"></i>
+                    <span>Reset North</span>
+                </button>
+                <button class="action-btn" id="btn-fit" title="Zoom to fit measurements or reset scale zoom">
+                    <i data-lucide="maximize"></i>
+                    <span>Zoom Fit</span>
+                </button>
+                <button class="action-btn" id="btn-locate" title="Zoom to current location">
+                    <i data-lucide="navigation"></i>
+                    <span>Locate</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
