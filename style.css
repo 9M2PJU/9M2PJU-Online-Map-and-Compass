@@ -30,6 +30,11 @@
     
     --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
     
     --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     --transition-normal: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
@@ -81,6 +86,7 @@
 body, html {
     width: 100%;
     height: 100%;
+    min-height: 100%;
     overflow: hidden;
     font-family: var(--font-sans);
     background-color: #0f172a;
@@ -91,6 +97,7 @@ body, html {
 #map {
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     position: absolute;
     top: 0;
     left: 0;
@@ -175,9 +182,9 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 
 .sidebar {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    bottom: 20px;
+    top: calc(20px + var(--safe-top));
+    left: calc(20px + var(--safe-left));
+    bottom: calc(20px + var(--safe-bottom));
     width: 320px;
     z-index: 100;
     pointer-events: auto;
@@ -225,7 +232,9 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 6px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
     border-radius: var(--radius-sm);
     transition: background-color var(--transition-fast), color var(--transition-fast);
 }
@@ -238,8 +247,8 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 /* Sidebar Toggle Trigger (Visible when collapsed) */
 .sidebar-trigger {
     position: absolute;
-    top: 20px;
-    left: 20px;
+    top: calc(20px + var(--safe-top));
+    left: calc(20px + var(--safe-left));
     width: 44px;
     height: 44px;
     z-index: 99;
@@ -279,7 +288,8 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     background: none;
     border: none;
     color: var(--text-secondary);
-    padding: 14px 0;
+    min-height: 54px;
+    padding: 10px 0;
     font-family: var(--font-sans);
     font-size: 11px;
     font-weight: 600;
@@ -430,6 +440,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     border: none;
     border-radius: var(--radius-sm);
     padding: 0 16px;
+    min-height: 44px;
     font-family: var(--font-sans);
     font-weight: 600;
     font-size: 13px;
@@ -452,7 +463,8 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 }
 
 .search-result-item {
-    padding: 8px 12px;
+    min-height: 44px;
+    padding: 10px 12px;
     font-size: 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--border-color);
@@ -481,6 +493,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     justify-content: space-between;
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
+    min-height: 48px;
     padding: 8px 12px;
     border-radius: var(--radius-sm);
     cursor: pointer;
@@ -513,7 +526,9 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
     border-radius: 4px;
     transition: color var(--transition-fast), background-color var(--transition-fast);
 }
@@ -536,6 +551,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
+    min-height: 44px;
     padding: 8px 12px;
     font-family: var(--font-sans);
     font-size: 12px;
@@ -551,7 +567,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 
 /* Top Center HUD Display */
 .coords-hud {
-    top: 20px;
+    top: calc(20px + var(--safe-top));
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 24px;
@@ -684,7 +700,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 /* ── Bottom Measurement Action Bar ──────────────────────────────────── */
 .action-bar-container {
     position: absolute;
-    bottom: 24px;
+    bottom: calc(24px + var(--safe-bottom));
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
@@ -712,6 +728,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     background: none;
     border: none;
     color: var(--text-secondary);
+    min-height: 44px;
     padding: 10px 18px;
     border-radius: 30px;
     font-family: var(--font-sans);
@@ -778,7 +795,8 @@ body.measuring #map {
     border: 1px solid var(--border-color);
     background: var(--bg-primary);
     color: var(--text-secondary);
-    padding: 10px 0;
+    min-height: 44px;
+    padding: 12px 6px;
     text-align: center;
     border-radius: var(--radius-sm);
     font-size: 12px;
@@ -825,11 +843,20 @@ body.measuring #map {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    body, html,
+    #map,
+    .app-container {
+        height: 100dvh;
+    }
+
     .sidebar {
-        width: calc(100vw - 40px);
-        left: 20px;
+        width: calc(100vw - 32px - var(--safe-left) - var(--safe-right));
+        left: calc(16px + var(--safe-left));
+        right: calc(16px + var(--safe-right));
+        top: calc(16px + var(--safe-top));
         bottom: auto;
-        height: 60%;
+        height: min(68dvh, 520px);
+        max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom));
     }
     
     .sidebar.collapsed {
@@ -837,8 +864,8 @@ body.measuring #map {
     }
     
     .sidebar-trigger {
-        top: 20px;
-        left: 20px;
+        top: calc(16px + var(--safe-top));
+        left: calc(16px + var(--safe-left));
     }
     
     .coords-hud {
@@ -846,8 +873,8 @@ body.measuring #map {
     }
     
     .action-bar-container {
-        width: 90%;
-        bottom: 16px;
+        width: calc(100vw - 24px - var(--safe-left) - var(--safe-right));
+        bottom: calc(12px + var(--safe-bottom));
     }
     
     .action-bar {
@@ -858,5 +885,17 @@ body.measuring #map {
     
     .action-btn span {
         display: none; /* Hide button text on mobile, icons only */
+    }
+
+    .action-btn {
+        min-width: 44px;
+        padding: 10px 12px;
+    }
+
+    .leaflet-control-layers,
+    .leaflet-bar a {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        line-height: 44px !important;
     }
 }
