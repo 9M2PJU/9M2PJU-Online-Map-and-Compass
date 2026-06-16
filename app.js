@@ -35,9 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     });
 
-    // Start with Standard (OSM) by default
-    // This serves as a fallback if the user denies location access.
-    const defaultCenter = [37.7456, -119.5332]; 
+    // Start in Kuala Lumpur, Malaysia as the fallback if location access is unavailable.
+    const defaultCenter = [3.1390, 101.6869];
     const map = L.map('map', { 
         tap: false, 
         zoomControl: false, // We'll add custom positioned zoom control
