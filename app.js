@@ -2,7 +2,12 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Lucide Icons
-    lucide.createIcons();
+    const createIcons = () => {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    };
+    createIcons();
 
     // ── Map Configuration & Setup ─────────────────────────────────────────────
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -124,6 +129,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let posX = window.innerWidth / 2;
     let posY = window.innerHeight / 2;
     let toolRot = 0; // Rotation angle in degrees
+    let currentScale = window.innerWidth <= 768 ? 0.65 : 1;
+    document.documentElement.style.setProperty('--compass-scale', currentScale);
     
     // Geographical anchor coordinates (so it moves with the map)
     let anchorLatLng = map.containerPointToLatLng([posX, posY]);
@@ -132,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Updates position of the DOM compass and triggers overlay updates
     function applyTransform() {
-        toolBox.style.transform = `translate(${posX - CX}px, ${posY - CY}px) rotate(${toolRot}deg)`;
+        toolBox.style.transform = `translate(${posX - (CX * currentScale)}px, ${posY - (CY * currentScale)}px) rotate(${toolRot}deg)`;
         capsuleCounter.setAttribute('transform', `rotate(${-toolRot} ${CX} ${CY})`);
 
         const bearing = ((toolRot % 360) + 360) % 360;
@@ -148,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Move compass DOM element only (used during map panning to prevent recursive calculations)
     function applyTransformOnly() {
-        toolBox.style.transform = `translate(${posX - CX}px, ${posY - CY}px) rotate(${toolRot}deg)`;
+        toolBox.style.transform = `translate(${posX - (CX * currentScale)}px, ${posY - (CY * currentScale)}px) rotate(${toolRot}deg)`;
         capsuleCounter.setAttribute('transform', `rotate(${-toolRot} ${CX} ${CY})`);
         
         const bearing = ((toolRot % 360) + 360) % 360;
@@ -185,9 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate Sun Position using SunCalc
         try {
+            if (!window.SunCalc) {
+                document.getElementById('sun-text').textContent = 'Sun Position: unavailable';
+                return;
+            }
+
             const now = new Date();
-            const sunPos = SunCalc.getPosition(now, latlng.lat, latlng.lng);
-            const times = SunCalc.getTimes(now, latlng.lat, latlng.lng);
+            const sunPos = window.SunCalc.getPosition(now, latlng.lat, latlng.lng);
+            const times = window.SunCalc.getTimes(now, latlng.lat, latlng.lng);
             
             // Azimuth is measured southwards, let's normalize to standard North azimuth (0-360)
             const azimuthDeg = ((sunPos.azimuth * 180 / Math.PI) + 180) % 360;
@@ -511,15 +523,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ── Compass Scaling (Scroll / Pinch) ──────────────────────────────────────
-    let currentScale = window.innerWidth <= 768 ? 0.65 : 1;
-    document.documentElement.style.setProperty('--compass-scale', currentScale);
-
     // Zoom scale with mouse wheel over the compass
     toolBox.addEventListener('wheel', e => {
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.05 : 0.05;
         currentScale = Math.max(0.4, Math.min(currentScale + delta, 2.0));
         document.documentElement.style.setProperty('--compass-scale', currentScale);
+        applyTransformOnly();
     });
 
     // Pinch to zoom on touch devices
@@ -548,6 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const scaleFactor = currentDist / initialPinchDist;
             currentScale = Math.max(0.4, Math.min(initialScale * scaleFactor, 2.0));
             document.documentElement.style.setProperty('--compass-scale', currentScale);
+            applyTransformOnly();
         }
     });
 
@@ -568,6 +579,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
     const sidebarTrigger = document.getElementById('sidebar-trigger');
+
+    if (window.matchMedia('(max-width: 768px)').matches) {
+        sidebar.classList.add('collapsed');
+        sidebarTrigger.classList.remove('hidden');
+        document.body.classList.add('sidebar-collapsed');
+    }
 
     closeSidebarBtn.addEventListener('click', () => {
         sidebar.classList.add('collapsed');
@@ -711,10 +728,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const addWaypointBtn = document.getElementById('add-waypoint-btn');
     const waypointListContainer = document.getElementById('waypoint-list-container');
 
-    let waypoints = JSON.parse(localStorage.getItem('saved_waypoints') || '[]');
+    function loadWaypoints() {
+        try {
+            return JSON.parse(localStorage.getItem('saved_waypoints') || '[]');
+        } catch (error) {
+            console.warn('Unable to read saved waypoints', error);
+            return [];
+        }
+    }
+
+    let waypoints = loadWaypoints();
 
     function saveWaypoints() {
-        localStorage.setItem('saved_waypoints', JSON.stringify(waypoints));
+        try {
+            localStorage.setItem('saved_waypoints', JSON.stringify(waypoints));
+        } catch (error) {
+            console.warn('Unable to save waypoints', error);
+        }
         renderWaypoints();
     }
 
@@ -768,7 +798,7 @@ document.addEventListener('DOMContentLoaded', () => {
             waypointListContainer.appendChild(div);
         });
         
-        lucide.createIcons();
+        createIcons();
     }
 
     addWaypointBtn.addEventListener('click', () => {
@@ -789,6 +819,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let measurePts = [];
     const measureLayer = L.layerGroup().addTo(map);
     const resultEl = document.getElementById('measure-result');
+
+    function showTransientMessage(message) {
+        resultEl.textContent = message;
+        resultEl.style.display = 'block';
+
+        setTimeout(() => {
+            if (!measureMode && measurePts.length === 0) {
+                resultEl.style.display = 'none';
+            }
+        }, 3500);
+    }
 
     const ptStyleDistance = { radius: 6, color: '#fff', weight: 2, fillColor: '#2563eb', fillOpacity: 1 };
     const ptStyleArea = { radius: 6, color: '#fff', weight: 2, fillColor: '#10b981', fillOpacity: 1 };
@@ -1007,6 +1048,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     map.on('locationerror', () => {
-        alert("Location access denied or unavailable.");
+        showTransientMessage('Location access denied or unavailable.');
     });
 });
