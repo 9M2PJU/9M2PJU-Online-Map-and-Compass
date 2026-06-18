@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const map = L.map('map', { 
         tap: false, 
         zoomControl: false, // We'll add custom positioned zoom control
-        layers: [voyager]
+        layers: [osm]
     }).setView(defaultCenter, 13);
 
     // Attempt to locate the user on startup
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function setMapStyle(style) {
-        const targetLayer = style === 'dark' ? darkMatter : voyager;
+        const targetLayer = style === 'dark' ? darkMatter : osm;
         [osm, topo, satellite, darkMatter, voyager].forEach(layer => {
             if (layer !== targetLayer && map.hasLayer(layer)) {
                 map.removeLayer(layer);
