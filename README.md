@@ -150,36 +150,6 @@ Recommended browsers:
 - Firefox
 - Safari on iOS/macOS
 
-## Local Use
-
-Because this is a static app, you can open it directly:
-
-```text
-index.html
-```
-
-For location access, most browsers require HTTPS or localhost. If geolocation is blocked when opening the file directly, serve the folder locally:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000
-```
-
-## GitHub Pages Deployment
-
-1. Open the repository settings.
-2. Select **Pages**.
-3. Set source branch to `main`.
-4. Set folder to `/ (root)`.
-5. Save.
-
-GitHub Pages will publish the app from the static files in this repository.
-
 ## Project Structure
 
 ```text
