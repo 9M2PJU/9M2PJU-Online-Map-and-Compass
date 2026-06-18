@@ -932,7 +932,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createDivLabel(html) {
-        return L.divIcon({ className: '', html, iconSize: [0, 0] });
+        return L.divIcon({ className: 'measure-label-icon', html, iconSize: [0, 0] });
+    }
+
+    function createPointLabel(index, isArea) {
+        const label = isArea ? `A${index + 1}` : `${index + 1}`;
+        const className = isArea ? 'measure-point-label measure-point-label-area' : 'measure-point-label';
+        return `<div class="${className}">${label}</div>`;
+    }
+
+    function createSegmentLabel(text, isArea) {
+        const className = isArea ? 'measure-segment-label measure-segment-label-area' : 'measure-segment-label';
+        return `<div class="${className}">${text}</div>`;
     }
 
     function redrawMeasurements() {
@@ -945,15 +956,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const isArea = (measureMode === 'area');
         const pointStyle = isArea ? ptStyleArea : ptStyleDistance;
-        const colorHex = isArea ? 'rgba(16,185,129,0.9)' : 'rgba(37,99,235,0.9)';
 
         // Draw node circles & numbers
         measurePts.forEach((p, i) => {
             L.circleMarker(p, pointStyle).addTo(measureLayer);
             L.marker(p, {
-                icon: createDivLabel(
-                    `<div style="background:rgba(0,0,0,0.75);color:#fff;padding:2px 6px;border-radius:10px;font-size:10px;font-family:var(--font-mono);border:1px solid rgba(255,255,255,0.15);transform:translate(8px,-12px);white-space:nowrap;">Point ${i + 1}</div>`
-                )
+                icon: createDivLabel(createPointLabel(i, isArea))
             }).addTo(measureLayer);
         });
 
@@ -971,9 +979,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const segDist = getGeodesicDistance(measurePts[i], measurePts[j]);
                 
                 L.marker(mid, {
-                    icon: createDivLabel(
-                        `<div style="background:${colorHex};color:#fff;padding:2px 6px;border-radius:10px;font-size:9px;font-family:var(--font-mono);box-shadow:var(--shadow-sm);transform:translate(-50%,-50%);white-space:nowrap;">${formatDist(segDist)}</div>`
-                    )
+                    icon: createDivLabel(createSegmentLabel(`${i + 1}-${j + 1}: ${formatDist(segDist)}`, true))
                 }).addTo(measureLayer);
             }
 
@@ -999,9 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const segDist = getGeodesicDistance(measurePts[i], measurePts[i + 1]);
                 
                 L.marker(mid, {
-                    icon: createDivLabel(
-                        `<div style="background:${colorHex};color:#fff;padding:2px 6px;border-radius:10px;font-size:9px;font-family:var(--font-mono);box-shadow:var(--shadow-sm);transform:translate(-50%,-50%);white-space:nowrap;">${formatDist(segDist)}</div>`
-                    )
+                    icon: createDivLabel(createSegmentLabel(`${i + 1}-${i + 2}: ${formatDist(segDist)}`, false))
                 }).addTo(measureLayer);
             }
 
@@ -1013,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < measurePts.length - 1; i++) {
                     totalDist += getGeodesicDistance(measurePts[i], measurePts[i + 1]);
                 }
-                resultEl.innerHTML = `Total Path Distance: <strong>${formatDist(totalDist)}</strong> &nbsp;(${measurePts.length} points)`;
+                resultEl.innerHTML = `Total Distance: <strong>${formatDist(totalDist)}</strong> &nbsp;(${measurePts.length} points)`;
             }
         }
     }

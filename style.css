@@ -804,6 +804,51 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     animation: fade-in 0.25s var(--transition-fast);
 }
 
+.measure-label-icon {
+    background: transparent;
+    border: 0;
+}
+
+.measure-point-label {
+    align-items: center;
+    background: #2563eb;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    color: #fff;
+    display: flex;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 800;
+    height: 24px;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    width: 24px;
+}
+
+.measure-point-label-area {
+    background: #10b981;
+    font-size: 10px;
+}
+
+.measure-segment-label {
+    background: rgba(37, 99, 235, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 7px;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+}
+
+.measure-segment-label-area {
+    background: rgba(16, 185, 129, 0.95);
+}
+
 /* ── Map Mode Trigger/Helper ────────────────────────────────────────── */
 body.measuring #map {
     cursor: crosshair !important;
