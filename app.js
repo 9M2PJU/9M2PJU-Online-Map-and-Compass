@@ -547,6 +547,15 @@ document.addEventListener('DOMContentLoaded', () => {
         applyTransformOnly();
     }
 
+    function centerCompassOnMap() {
+        anchorLatLng = map.getCenter();
+        const point = map.latLngToContainerPoint(anchorLatLng);
+        posX = point.x;
+        posY = point.y;
+        applyTransformOnly();
+        scheduleDrawRulers();
+    }
+
     // Keep compass anchored to map on drag/zoom
     map.on('move', () => {
         scheduleDrawRulers();
@@ -1075,9 +1084,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-fit').addEventListener('click', () => {
         if (measurePts.length > 0) {
             const bounds = L.latLngBounds(measurePts);
-            map.fitBounds(bounds, { padding: [50, 50] });
+            map.fitBounds(bounds, { padding: [50, 50], animate: false });
+            centerCompassOnMap();
         } else {
-            map.setView(anchorLatLng, 14);
+            const center = map.getCenter();
+            anchorLatLng = center;
+            map.setView(center, 14, { animate: false });
+            centerCompassOnMap();
         }
     });
 
