@@ -666,8 +666,8 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 /* Rotate handle */
 #rotate-handle {
     position: absolute;
-    bottom: 25px;
-    right: 95px; /* Aligns with handle area */
+    left: calc((130px * var(--compass-scale, 1)) - 35px);
+    top: calc((440px * var(--compass-scale, 1)) - 35px);
     width: 70px;
     height: 70px;
     border-radius: 50%;
