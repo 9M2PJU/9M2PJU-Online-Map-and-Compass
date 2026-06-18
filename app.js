@@ -125,8 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const svgEl          = document.getElementById('compass-svg');
 
     // Compass Screen coordinates
+    function getDefaultCompassY() {
+        return window.innerHeight / 2 + (window.innerWidth <= 768 ? 20 : 60);
+    }
+
     let posX = window.innerWidth / 2;
-    let posY = window.innerHeight / 2;
+    let posY = getDefaultCompassY();
     let toolRot = 0; // Rotation angle in degrees
     let currentScale = window.innerWidth <= 768 ? 0.65 : 1;
     document.documentElement.style.setProperty('--compass-scale', currentScale);
@@ -175,21 +179,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${d}° ${m}' ${s}" ${dir}`;
     }
 
+    function toMaidenhead(lat, lng) {
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return '--';
+
+        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const normalizedLng = Math.min(Math.max(lng + 180, 0), 359.999999);
+        const normalizedLat = Math.min(Math.max(lat + 90, 0), 179.999999);
+
+        const fieldLng = Math.floor(normalizedLng / 20);
+        const fieldLat = Math.floor(normalizedLat / 10);
+        const squareLng = Math.floor((normalizedLng % 20) / 2);
+        const squareLat = Math.floor(normalizedLat % 10);
+        const subsquareLng = Math.floor(((normalizedLng % 2) / 2) * 24);
+        const subsquareLat = Math.floor((normalizedLat % 1) * 24);
+
+        return `${letters[fieldLng]}${letters[fieldLat]}${squareLng}${squareLat}${letters[subsquareLng]}${letters[subsquareLat]}`;
+    }
+
     let lastSunUpdate = 0;
     const SUN_UPDATE_INTERVAL_MS = 500;
 
     function updateCoordinateDisplays(latlng) {
         const latStr = latlng.lat.toFixed(5);
         const lngStr = latlng.lng.toFixed(5);
+        const maidenheadGrid = toMaidenhead(latlng.lat, latlng.lng);
 
         // HUD Overlay
         document.getElementById('latlng-text').textContent = `${latStr}, ${lngStr}`;
+        document.getElementById('grid-text').textContent = `Grid: ${maidenheadGrid}`;
         
         // Sidebar Dashboard Panel
         document.getElementById('dash-lat').textContent = `${latStr}°`;
         document.getElementById('dash-lat-dms').textContent = toDMS(latlng.lat, true);
         document.getElementById('dash-lng').textContent = `${lngStr}°`;
         document.getElementById('dash-lng-dms').textContent = toDMS(latlng.lng, false);
+        document.getElementById('dash-grid').textContent = maidenheadGrid;
         document.getElementById('dash-zoom').textContent = map.getZoom();
 
         // Calculate Sun Position using SunCalc
@@ -498,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (now - lastTap < 350) {
             toolRot = 0;
             posX = window.innerWidth / 2;
-            posY = window.innerHeight / 2;
+            posY = getDefaultCompassY();
             applyTransform();
             scheduleDrawRulers();
         }
@@ -537,7 +561,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const point = map.latLngToContainerPoint(anchorLatLng);
         if (point.x < 0 || point.x > window.innerWidth || point.y < 0 || point.y > window.innerHeight) {
             posX = window.innerWidth / 2;
-            posY = window.innerHeight / 2;
+            posY = getDefaultCompassY();
             applyTransform();
         } else {
             posX = point.x;
@@ -592,13 +616,6 @@ document.addEventListener('DOMContentLoaded', () => {
             initialPinchDist = null;
         }
     });
-
-    // Delay initial movement so user notices the gorgeous animation
-    setTimeout(() => {
-        posY += 60; 
-        applyTransform();
-        scheduleDrawRulers();
-    }, 400);
 
     // ── Sidebar UI Navigation ──────────────────────────────────────────────────
     const sidebar = document.getElementById('sidebar');
@@ -1071,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Recenter compass to middle of screen
         posX = window.innerWidth / 2;
-        posY = window.innerHeight / 2;
+        posY = getDefaultCompassY();
         
         applyTransform();
         scheduleDrawRulers();

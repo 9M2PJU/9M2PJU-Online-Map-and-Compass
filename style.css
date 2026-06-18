@@ -599,6 +599,14 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     letter-spacing: 0.5px;
 }
 
+.coords-hud-grid {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 3px;
+}
+
 .coords-hud-sun {
     font-size: 11px;
     color: var(--text-secondary);
