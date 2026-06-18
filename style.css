@@ -1,7 +1,5 @@
 /* style.css - Premium Design System */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
 :root {
     /* Theme - Obsidian Dark (Default) */
     --bg-primary: rgba(18, 18, 24, 0.75);
@@ -348,6 +346,25 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
 }
 .sidebar-content::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
+}
+
+.sidebar-footer {
+    border-top: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 11px 16px;
+    text-align: center;
+}
+
+.sidebar-footer a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+    color: var(--accent);
+    text-decoration: underline;
 }
 
 /* Sidebar Modules */
@@ -710,7 +727,7 @@ body.sidebar-collapsed .leaflet-bottom.leaflet-left {
     align-items: center;
     gap: 12px;
     width: 90vw;
-    max-width: 800px;
+    max-width: 980px;
 }
 
 .action-bar {
@@ -790,7 +807,14 @@ body.measuring #map {
     gap: 8px;
 }
 
-.theme-opt {
+.map-style-selector {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.theme-opt,
+.map-style-opt {
     flex: 1;
     border: 1px solid var(--border-color);
     background: var(--bg-primary);
@@ -805,12 +829,21 @@ body.measuring #map {
     transition: all var(--transition-fast);
 }
 
-.theme-opt:hover {
+.map-style-opt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.theme-opt:hover,
+.map-style-opt:hover {
     border-color: var(--text-muted);
     color: var(--text-primary);
 }
 
-.theme-opt.active {
+.theme-opt.active,
+.map-style-opt.active {
     border-color: var(--accent);
     background: var(--accent);
     color: #fff;
@@ -841,6 +874,27 @@ body.measuring #map {
     }
 }
 
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-panel,
+    .leaflet-bar a,
+    .leaflet-control-layers,
+    .leaflet-control-scale-line {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     body, html,
@@ -857,6 +911,15 @@ body.measuring #map {
         bottom: auto;
         height: min(68dvh, 520px);
         max-height: calc(100dvh - 32px - var(--safe-top) - var(--safe-bottom));
+    }
+
+    .sidebar-content {
+        padding: 16px;
+        gap: 14px;
+    }
+
+    .sidebar-footer {
+        padding: 9px 12px;
     }
     
     .sidebar.collapsed {

@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const map = L.map('map', { 
         tap: false, 
         zoomControl: false, // We'll add custom positioned zoom control
-        layers: [osm] 
+        layers: [voyager]
     }).setView(defaultCenter, 13);
 
     // Attempt to locate the user on startup
@@ -175,6 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${d}° ${m}' ${s}" ${dir}`;
     }
 
+    let lastSunUpdate = 0;
+    const SUN_UPDATE_INTERVAL_MS = 500;
+
     function updateCoordinateDisplays(latlng) {
         const latStr = latlng.lat.toFixed(5);
         const lngStr = latlng.lng.toFixed(5);
@@ -190,13 +193,19 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dash-zoom').textContent = map.getZoom();
 
         // Calculate Sun Position using SunCalc
+        const nowMs = Date.now();
+        if (nowMs - lastSunUpdate < SUN_UPDATE_INTERVAL_MS) {
+            return;
+        }
+        lastSunUpdate = nowMs;
+
         try {
             if (!window.SunCalc) {
                 document.getElementById('sun-text').textContent = 'Sun Position: unavailable';
                 return;
             }
 
-            const now = new Date();
+            const now = new Date(nowMs);
             const sunPos = window.SunCalc.getPosition(now, latlng.lat, latlng.lng);
             const times = window.SunCalc.getTimes(now, latlng.lat, latlng.lng);
             
@@ -272,9 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const offset = i * stepPixels;
             const dist = i * stepMeters;
             
-            // Major ticks at step, minor subdivisions
-            const isMajor = true;
-            let tickLen = 10;
+            const tickLen = 10;
             
             [CY - offset, CY + offset].forEach((y, index) => {
                 if (i === 0 && index > 0) return; // Draw middle tick once
@@ -385,9 +392,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Redraw rulers when map moves or zooms (since scale changes!)
-    map.on('zoom', drawRulers);
-    map.on('move', drawRulers);
+    let rulerFrame = null;
+
+    function scheduleDrawRulers() {
+        if (rulerFrame !== null) return;
+
+        rulerFrame = window.requestAnimationFrame(() => {
+            rulerFrame = null;
+            drawRulers();
+        });
+    }
+
+    // Redraw rulers when map moves or zooms, batched to the display frame.
+    map.on('zoom', scheduleDrawRulers);
 
     // Initial position & scale calculation
     applyTransform();
@@ -430,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Update the anchor location to center pin
         anchorLatLng = map.containerPointToLatLng([posX, posY]);
-        drawRulers();
+        scheduleDrawRulers();
     };
 
     svgEl.addEventListener('pointerup', endDrag);
@@ -483,26 +500,35 @@ document.addEventListener('DOMContentLoaded', () => {
             posX = window.innerWidth / 2;
             posY = window.innerHeight / 2;
             applyTransform();
-            drawRulers();
+            scheduleDrawRulers();
         }
         lastTap = now;
     });
 
     let isFollowingCamera = false;
+    let mapMoveFrame = null;
 
-    // Keep compass anchored to map on drag/zoom
-    map.on('move', () => {
+    function syncCompassToMap() {
+        mapMoveFrame = null;
         if (dragActive) return; // Prevent conflicts if user is actively dragging it
-        
+
         if (isFollowingCamera) {
             anchorLatLng = map.getCenter();
         }
-        
+
         const point = map.latLngToContainerPoint(anchorLatLng);
         posX = point.x;
         posY = point.y;
-        
+
         applyTransformOnly();
+    }
+
+    // Keep compass anchored to map on drag/zoom
+    map.on('move', () => {
+        scheduleDrawRulers();
+
+        if (mapMoveFrame !== null) return;
+        mapMoveFrame = window.requestAnimationFrame(syncCompassToMap);
     });
 
     // Handle Window Resize
@@ -518,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
             posY = point.y;
             applyTransformOnly();
         }
-        drawRulers();
+        scheduleDrawRulers();
     });
 
     // ── Compass Scaling (Scroll / Pinch) ──────────────────────────────────────
@@ -571,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         posY += 60; 
         applyTransform();
-        drawRulers();
+        scheduleDrawRulers();
     }, 400);
 
     // ── Sidebar UI Navigation ──────────────────────────────────────────────────
@@ -647,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         map.once('moveend', () => {
                             isFollowingCamera = false;
                             anchorLatLng = L.latLng(lat, lon);
-                            drawRulers();
+                            scheduleDrawRulers();
                         });
                         
                         searchResults.style.display = 'none';
@@ -683,6 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Theme Selector ────────────────────────────────────────────────────────
     const themeOpts = document.querySelectorAll('.theme-opt');
+    const mapStyleOpts = document.querySelectorAll('.map-style-opt');
     const opacitySlider = document.getElementById('opacity-slider');
     const opacityVal = document.getElementById('opacity-val');
     const baseplate = document.getElementById('compass-baseplate');
@@ -694,24 +721,28 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const theme = opt.dataset.themeVal;
             document.documentElement.setAttribute('data-theme', theme);
+        });
+    });
 
-            // Change default map style to dark if Cyberpunk/Obsidian is chosen
-            if (theme === 'cyberpunk' || theme === 'dark') {
-                if (!map.hasLayer(darkMatter) && !map.hasLayer(satellite)) {
-                    map.addLayer(darkMatter);
-                    map.removeLayer(voyager);
-                    map.removeLayer(osm);
-                    map.removeLayer(topo);
-                }
-            } else {
-                if (!map.hasLayer(osm)) {
-                    map.addLayer(osm);
-                    map.removeLayer(darkMatter);
-                    map.removeLayer(voyager);
-                    map.removeLayer(topo);
-                    map.removeLayer(satellite);
-                }
+    function setMapStyle(style) {
+        const targetLayer = style === 'dark' ? darkMatter : voyager;
+        [osm, topo, satellite, darkMatter, voyager].forEach(layer => {
+            if (layer !== targetLayer && map.hasLayer(layer)) {
+                map.removeLayer(layer);
             }
+        });
+        if (!map.hasLayer(targetLayer)) {
+            map.addLayer(targetLayer);
+        }
+
+        mapStyleOpts.forEach(opt => {
+            opt.classList.toggle('active', opt.dataset.mapStyle === style);
+        });
+    }
+
+    mapStyleOpts.forEach(opt => {
+        opt.addEventListener('click', () => {
+            setMapStyle(opt.dataset.mapStyle);
         });
     });
 
@@ -763,15 +794,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = 'waypoint-item';
             
-            div.innerHTML = `
-                <div class="waypoint-details">
-                    <span class="waypoint-name">${wp.name}</span>
-                    <span class="waypoint-coords">${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}</span>
-                </div>
-                <button class="delete-waypoint-btn" data-index="${index}" title="Delete Waypoint">
-                    <i data-lucide="x" size="14"></i>
-                </button>
-            `;
+            const details = document.createElement('div');
+            details.className = 'waypoint-details';
+
+            const name = document.createElement('span');
+            name.className = 'waypoint-name';
+            name.textContent = wp.name;
+
+            const coords = document.createElement('span');
+            coords.className = 'waypoint-coords';
+            coords.textContent = `${wp.lat.toFixed(5)}, ${wp.lng.toFixed(5)}`;
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-waypoint-btn';
+            deleteBtn.dataset.index = index;
+            deleteBtn.title = 'Delete Waypoint';
+            deleteBtn.innerHTML = '<i data-lucide="x" size="14"></i>';
+
+            details.append(name, coords);
+            div.append(details, deleteBtn);
 
             // Fly to waypoint on click
             div.addEventListener('click', e => {
@@ -783,12 +824,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 map.once('moveend', () => {
                     isFollowingCamera = false;
                     anchorLatLng = L.latLng(wp.lat, wp.lng);
-                    drawRulers();
+                    scheduleDrawRulers();
                 });
             });
 
             // Delete action
-            div.querySelector('.delete-waypoint-btn').addEventListener('click', (e) => {
+            deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 waypoints.splice(index, 1);
                 saveWaypoints();
@@ -1033,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         posY = window.innerHeight / 2;
         
         applyTransform();
-        drawRulers();
+        scheduleDrawRulers();
         
         // Brief location circle indicator
         const marker = L.circle(e.latlng, {

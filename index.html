@@ -6,11 +6,16 @@
     <title>9M2PJU Map & Compass</title>
     
     <!-- Stylesheets -->
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
     
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <!-- Map Container -->
@@ -168,6 +173,23 @@
 
                     <div class="module-card">
                         <div class="module-title">
+                            <i data-lucide="map" size="12"></i>
+                            Map Appearance
+                        </div>
+                        <div class="map-style-selector" role="group" aria-label="Map appearance">
+                            <button class="map-style-opt active" data-map-style="light" type="button">
+                                <i data-lucide="sun" size="16"></i>
+                                Light
+                            </button>
+                            <button class="map-style-opt" data-map-style="dark" type="button">
+                                <i data-lucide="moon" size="16"></i>
+                                Dark
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="module-card">
+                        <div class="module-title">
                             <i data-lucide="sliders" size="12"></i>
                             Baseplate Opacity
                         </div>
@@ -190,6 +212,10 @@
                 </div>
 
             </div>
+
+            <footer class="sidebar-footer">
+                Made by <a href="https://hamradio.my" target="_blank" rel="noopener noreferrer">9M2PJU</a>
+            </footer>
         </div>
 
         <!-- Floating HUD at Top Center -->
@@ -311,7 +337,7 @@
                     <i data-lucide="compass"></i>
                     <span>Reset North</span>
                 </button>
-                <button class="action-btn" id="btn-fit" title="Zoom to fit measurements or reset scale zoom">
+                <button class="action-btn" id="btn-fit" title="Zoom to fit measurements or center on compass">
                     <i data-lucide="maximize"></i>
                     <span>Zoom Fit</span>
                 </button>
@@ -325,8 +351,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer src="app.js"></script>
 </body>
 </html>
