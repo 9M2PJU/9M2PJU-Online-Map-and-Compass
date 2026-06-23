@@ -1,6 +1,14 @@
 // app.js - Map & Compass Application Logic
 
 document.addEventListener('DOMContentLoaded', () => {
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(error => {
+                console.warn('Service worker registration failed', error);
+            });
+        });
+    }
+
     // Initialize Lucide Icons
     const createIcons = () => {
         if (window.lucide && typeof window.lucide.createIcons === 'function') {

@@ -3,6 +3,7 @@
 ![Static Site](https://img.shields.io/badge/static-HTML%20%2B%20CSS%20%2B%20JS-2563eb)
 ![Leaflet](https://img.shields.io/badge/maps-Leaflet-199900)
 ![Mobile Friendly](https://img.shields.io/badge/mobile-friendly-10b981)
+![PWA](https://img.shields.io/badge/PWA-installable-14b8a6)
 ![GitHub Pages](https://img.shields.io/badge/hosting-GitHub%20Pages-111827)
 
 A browser-based map and Silva-style compass tool for navigation practice, field planning, ham radio location work, and quick distance checks.
@@ -13,7 +14,7 @@ Built by [9M2PJU](https://hamradio.my).
 
 9M2PJU Map & Compass overlays an interactive orienteering compass on top of live web maps. Drag the compass pivot to any location, rotate the bezel for bearing work, inspect coordinates, read the Maidenhead grid square, save waypoints, and measure routes or areas directly in the browser.
 
-No install, no build step, no backend. Just open the page.
+No build step, no backend. Open it in the browser, or install it as a PWA on supported desktop and mobile browsers.
 
 ## Highlights
 
@@ -29,6 +30,7 @@ No install, no build step, no backend. Just open the page.
 | Dynamic rulers | Compass baseplate rulers scale with zoom and latitude. |
 | Solar position | Solar azimuth, altitude, sunrise, and sunset for the compass position. |
 | Waypoints | Save coordinates locally and jump back to them later. |
+| Installable PWA | Add to desktop or mobile home screen with standalone display and cached app shell. |
 | Desktop and mobile | Responsive sidebar, touch-friendly controls, safe-area spacing, and mobile icon toolbar. |
 
 ## How It Works
@@ -142,6 +144,7 @@ Tested with modern desktop and mobile browser behavior in mind:
 - Reduced-motion support
 - Backdrop-filter fallback for browsers without glass blur support
 - Deferred scripts and preconnect hints for faster startup
+- Installable PWA metadata, icons, and service worker caching
 
 Recommended browsers:
 
@@ -157,6 +160,9 @@ Recommended browsers:
 ├── index.html   # App shell, SVG compass, controls, sidebar
 ├── style.css    # Responsive layout, themes, compass and measurement styling
 ├── app.js       # Map setup, compass logic, measurements, waypoints, grid locator
+├── sw.js        # Service worker for installability and app-shell caching
+├── manifest.webmanifest
+├── icons/       # PWA icons and Apple touch icon
 ├── CNAME        # Custom domain configuration
 └── README.md    # Project documentation
 ```

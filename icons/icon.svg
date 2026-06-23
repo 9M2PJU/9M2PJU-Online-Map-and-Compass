@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">9M2PJU Map and Compass</title>
+  <desc id="desc">A compass needle over a map grid.</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="0.48" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="needleRed" x1="256" y1="118" x2="256" y2="262" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fb7185"/>
+      <stop offset="1" stop-color="#dc2626"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#020617" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M89 154h334M89 256h334M89 358h334M154 89v334M256 89v334M358 89v334" stroke="#f8fafc" stroke-opacity="0.12" stroke-width="16"/>
+  <circle cx="256" cy="256" r="150" fill="#0f172a" fill-opacity="0.34" stroke="#f8fafc" stroke-opacity="0.42" stroke-width="10" filter="url(#shadow)"/>
+  <circle cx="256" cy="256" r="118" fill="none" stroke="#f8fafc" stroke-opacity="0.55" stroke-width="6"/>
+  <path d="M256 89l34 167h-68z" fill="url(#needleRed)" stroke="#fff" stroke-opacity="0.9" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M256 423l-34-167h68z" fill="#cbd5e1" stroke="#fff" stroke-opacity="0.9" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="256" cy="256" r="24" fill="#111827" stroke="#f8fafc" stroke-width="8"/>
+  <text x="256" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#f8fafc">N</text>
+  <text x="256" y="472" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="800" fill="#f8fafc">9M2PJU</text>
+</svg>
